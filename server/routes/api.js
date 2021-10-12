@@ -7,7 +7,7 @@ router.get('/', (req, res) => {
 });
 
 // Route for registering a user
-router.post('/', async(req, res)=> {
+router.post('/register', async(req, res)=> {
     const{first_name, last_name, email, role, password} = req.body;
     let user = {};
     user.first_name = first_name;
