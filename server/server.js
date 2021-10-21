@@ -6,6 +6,9 @@ require("dotenv").config();
 const connectDB = require("./DB/connection");
 const app = express();
 
+const cors = require('cors');
+app.use(cors());
+
 // Not sure but helping me to get rid of some error
 app.use(
   bodyParser.urlencoded({
