@@ -1,6 +1,5 @@
 // This is how a user looks like to the DB
 const mongoose = require('mongoose');
-
 const recipe = new mongoose.Schema({
         recipeName: {
             type: String,
@@ -21,17 +20,10 @@ const recipe = new mongoose.Schema({
             itemQuantity: {
                 type: String,
             },
-
-                ingredientName: {
-                    type: String,
-                },
-                unitType: {
-                    type: String,
-                },
-                calorie: {
-                    type: String,
-                }
-
+               ingredients:{
+                   type:mongoose.Schema.Types.ObjectId,
+                   ref: 'ingredients',
+               }
         }],
     user: {
         type:mongoose.Schema.Types.ObjectId,
