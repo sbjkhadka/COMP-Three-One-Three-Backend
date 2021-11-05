@@ -149,7 +149,7 @@ router.post('/login', async (req, res) => {
                     refreshToken: refreshToken
                 });
             } else {
-                res.json({ status: 'FAIL', details: 'User not found' });
+                res.json({ status: 'FAIL', details: 'User or password is incorrect' });
             }
         })
         .catch((error) => {
