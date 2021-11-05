@@ -1,28 +1,45 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../DB/schema/user');
+const Recipe = require('../DB/schema/recipeModel');
 const jwt = require('jsonwebtoken');
 
 router.use(express.json());
 
 router.get('/', (req, res) => {
-    res.send('Testing... testing');
+  res.send('Testing... testing');
 });
 
-// Route for registering a user
-router.post('/register', async(req, res)=> {
-    const{first_name, last_name, email, role, password} = req.body;
-    let user = {};
-    user.first_name = first_name;
-    user.last_name = last_name;
-    user.email = email;
-    user.role = role;
-    user.password = password;
+// get recipe by id
+router.get('/recipes', async (req, res) => {
+  // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
+  const recipeId = req.query.recipeId;
+  let recipe = {};
 
-    let userModel = new User(user);
-    await userModel.save()
+  await Recipe.findOne({ _id: recipeId }).then((recipe) => {
+    if (recipe) {
+      console.log(recipe);
+      res.json({ status: 'OK', reicpe: recipe });
+    } else {
+      res.json({ status: 'FAIL', details: 'Recipe not found' })
+    }
+  })
+})
+
+// Route for registering a user
+router.post('/register', async (req, res) => {
+  const { first_name, last_name, email, role, password } = req.body;
+  let user = {};
+  user.first_name = first_name;
+  user.last_name = last_name;
+  user.email = email;
+  user.role = role;
+  user.password = password;
+
+  let userModel = new User(user);
+  await userModel.save()
     .then((user) => {
-        res.json({status: 'OK', user: user});
+      res.json({ status: 'OK', user: user });
     })
     .catch(error => {
       const tempObj = { ...error };
@@ -32,38 +49,38 @@ router.post('/register', async(req, res)=> {
 });
 
 // Route for login
-router.post('/login', async(req, res) => {
-    const email = req.body.email;
-    await User.findOne({ email: email })
-      .then((user) => {
-          if(user) {
+router.post('/login', async (req, res) => {
+  const email = req.body.email;
+  await User.findOne({ email: email })
+    .then((user) => {
+      if (user) {
 
-            console.log('user', user);
-            const successfulUser = {
-              email: user.email,
-              firstName: user.first_name,
-              last_name: user.last_name,
-              role: user.role,
-            };
-            const accessToken = generateAccessToken(successfulUser);
-            const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
-            refreshTokens.push(refreshToken); // Put it in database or some file during production
-            res.json({
-              status: 'OK',
-              user: successfulUser,
-              accessToken: accessToken,
-              refreshToken: refreshToken
-            });
-          } else {
-              res.json({status: 'FAIL', details: 'User not found'});
-          }
-      })
-      .catch((error) => {
-        const tempObj = { ...error };
-        delete tempObj.keyValue;
-        console.log('err', error.message)
-        res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
-      });
+        console.log('user', user);
+        const successfulUser = {
+          email: user.email,
+          firstName: user.first_name,
+          last_name: user.last_name,
+          role: user.role,
+        };
+        const accessToken = generateAccessToken(successfulUser);
+        const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
+        refreshTokens.push(refreshToken); // Put it in database or some file during production
+        res.json({
+          status: 'OK',
+          user: successfulUser,
+          accessToken: accessToken,
+          refreshToken: refreshToken
+        });
+      } else {
+        res.json({ status: 'FAIL', details: 'User not found' });
+      }
+    })
+    .catch((error) => {
+      const tempObj = { ...error };
+      delete tempObj.keyValue;
+      console.log('err', error.message)
+      res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+    });
 });
 
 // Testing route for getting list of recipees by user
@@ -74,11 +91,11 @@ router.get('/recipees', authenticateToken, (req, res) => {
 
 router.post('/token', (req, res) => {
   const refreshToken = req.body.token;
-  if(refreshToken == null) return res.sendStatus(401);
-  if(!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+  if (refreshToken == null) return res.sendStatus(401);
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    if(err) return res.sendStatus(403);
-    const accessToken = generateAccessToken({email: user.email});
+    if (err) return res.sendStatus(403);
+    const accessToken = generateAccessToken({ email: user.email });
     res.json({ accessToken: accessToken });
   });
 });
@@ -107,7 +124,7 @@ function authenticateToken(req, res, next) {
 }
 
 function generateAccessToken(user) {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn:'15s'});
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
 }
 
 const recipees = [
