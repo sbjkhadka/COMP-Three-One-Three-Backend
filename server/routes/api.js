@@ -73,16 +73,45 @@ router.get('/globalRecipes', async (req, res) => {
     }
 })
 
+// route for recovering password
+router.post('/resetPassword', async (req, res) => {
+    const userEmail = req.body.email;
+    const userPassword = req.body.password;
+
+    var query = { 'email': userEmail };
+
+    User.findOneAndUpdate(query, { $set: { password: userPassword } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            return res.send(500, { error: err });
+        }
+        else {
+            res.json({ status: 'OK' })
+        }
+    });
+})
+
+// route for getting the security question by user email
+router.post('/securityQuestion', async (req, res) => {
+    const userEmail = req.body.email;
+    await User.findOne({ email: userEmail }).then((data) => {
+        if (data) {
+            res.json({ status: 'OK', securityQuestion: data.securityQuestion })
+        }
+    })
+})
+
 
 // Route for registering a user
 router.post('/register', async (req, res) => {
-    const { first_name, last_name, email, role, password } = req.body;
+    const { first_name, last_name, email, role, password, securityQuestion, securityAnswer } = req.body;
     let user = {};
     user.first_name = first_name;
     user.last_name = last_name;
     user.email = email;
     user.role = role;
     user.password = password;
+    user.securityQuestion = securityQuestion;
+    user.securityAnswer = securityAnswer;
 
     let userModel = new User(user);
     await userModel.save()
@@ -102,7 +131,6 @@ router.post('/login', async (req, res) => {
     await User.findOne({ email: email })
         .then((user) => {
             if (user) {
-
                 console.log('user', user);
                 const successfulUser = {
                     email: user.email,
