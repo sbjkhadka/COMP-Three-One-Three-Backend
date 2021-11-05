@@ -39,14 +39,14 @@ router.get('/recipes', async (req, res) => {
             }
         })
     }
-    res.json({ status: 'OK', ingredients: ingredients, recipe: recipe });
+    res.json({ status: 200, ingredients: ingredients, recipe: recipe });
 })
 
 router.get('/ingredients', async (req, res) => {
 
     const ingredients = await Ingredient.find();
     if (ingredients) {
-        res.json({ status: 'OK', ingredients: ingredients });
+        res.json({ status: 200, ingredients: ingredients });
     } else {
         res.json({ status: 'FAIL', details: 'Ingredients not found' })
     }
@@ -55,7 +55,7 @@ router.get('/ingredients', async (req, res) => {
 router.get('/allRecipes', async (req, res) => {
     const recipes = await Recipe.find();
     if (recipes) {
-        res.json({ status: 'OK', recipes: recipes });
+        res.json({ status: 200, recipes: recipes });
     } else {
         res.json({ status: 'FAIL', details: 'recipes not found' })
     }
@@ -67,7 +67,7 @@ router.get('/globalRecipes', async (req, res) => {
     const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
 
     if (filterRecipe) {
-        res.json({ status: 'OK', filterRecipe: filterRecipe });
+        res.json({ status: 200, filterRecipe: filterRecipe });
     } else {
         res.json({ status: 'FAIL', details: 'recipes not found' })
     }
@@ -82,10 +82,10 @@ router.post('/resetPassword', async (req, res) => {
 
     User.findOneAndUpdate(query, { $set: { password: userPassword } }, { upsert: false }, function (err, doc) {
         if (err) {
-            return res.send(500, { error: err });
+            res.json({ status: 'Failed to find user.' })
         }
         else {
-            res.json({ status: 'OK' })
+            res.json({ status: 200 })
         }
     });
 })
@@ -96,6 +96,9 @@ router.post('/securityQuestion', async (req, res) => {
     await User.findOne({ email: userEmail }).then((data) => {
         if (data) {
             res.json({ status: 'OK', securityQuestion: data.securityQuestion })
+        }
+        else {
+            res.json({ status: 'User not found' })
         }
     })
 })
