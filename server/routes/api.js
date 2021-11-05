@@ -20,10 +20,10 @@ router.get('/recipes', async (req, res) => {
         if (recipeRes) {
             recipe = recipeRes;
         } else {
-            res.json({ status: 'FAIL', details: 'Recipe not found' })
+            res.json({ status: 'FAIL', details: 'Recipe not found' });
         }
     })
-    recipeItem = recipe.recipeItem;
+    let recipeItem = recipe.recipeItem;
     let ingredients = [];
 
     for (var i = 0; i < recipeItem.length; i++) {
