@@ -128,9 +128,10 @@ router.post('/register', async (req, res) => {
 // Route for login
 router.post('/login', async (req, res) => {
     const email = req.body.email;
+    const password = req.body.password;
     await User.findOne({ email: email })
         .then((user) => {
-            if (user) {
+            if (user && user.password === password) {
                 console.log('user', user);
                 const successfulUser = {
                     email: user.email,
