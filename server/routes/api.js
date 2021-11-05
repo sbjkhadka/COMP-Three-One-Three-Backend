@@ -15,52 +15,68 @@ router.get('/', (req, res) => {
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
-    let recipe = {};
-    await Recipe.findOne({_id: recipeId}).then((recipe) => {
-        if (recipe) {
-            console.log(recipe);
-            res.json({status: 'OK', reicpe: recipe});
+    let recipe = new Recipe();
+    await Recipe.findOne({ _id: recipeId }).then((recipeRes) => {
+        if (recipeRes) {
+            recipe = recipeRes;
         } else {
-            res.json({status: 'FAIL', details: 'Recipe not found'})
+            res.json({ status: 'FAIL', details: 'Recipe not found' })
         }
     })
+    recipeItem = recipe.recipeItem;
+    let ingredients = [];
+
+    for (var i = 0; i < recipeItem.length; i++) {
+        var obj = recipeItem[i];
+        await Ingredient.findOne({ _id: obj.ingredients }).then((ing) => {
+            if (ing) {
+                var newIng = new Ingredient();
+                newIng.ingredientName = ing.ingredientName;
+                newIng.unitType = ing.unitType;
+                newIng.calorie = ing.calorie;
+
+                ingredients.push(newIng);
+            }
+        })
+    }
+    res.json({ status: 'OK', ingredients: ingredients, recipe: recipe });
 })
 
 router.get('/ingredients', async (req, res) => {
 
     const ingredients = await Ingredient.find();
     if (ingredients) {
-        res.json({status: 'OK', ingredients: ingredients});
+        res.json({ status: 'OK', ingredients: ingredients });
     } else {
-        res.json({status: 'FAIL', details: 'Ingredients not found'})
+        res.json({ status: 'FAIL', details: 'Ingredients not found' })
     }
 })
 
 router.get('/allRecipes', async (req, res) => {
     const recipes = await Recipe.find();
     if (recipes) {
-        res.json({status: 'OK', recipes: recipes});
+        res.json({ status: 'OK', recipes: recipes });
     } else {
-        res.json({status: 'FAIL', details: 'recipes not found'})
+        res.json({ status: 'FAIL', details: 'recipes not found' })
     }
 })
 router.get('/globalRecipes', async (req, res) => {
 
     const filters = req.query;
     const recipes = await Recipe.find();
-    const filterRecipe= recipes.filter((recipe)=> recipe.isGlobal===true)
+    const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
 
-   if (filterRecipe){
-        res.json({status: 'OK', filterRecipe: filterRecipe});
+    if (filterRecipe) {
+        res.json({ status: 'OK', filterRecipe: filterRecipe });
     } else {
-        res.json({status: 'FAIL', details: 'recipes not found'})
+        res.json({ status: 'FAIL', details: 'recipes not found' })
     }
 })
 
 
 // Route for registering a user
 router.post('/register', async (req, res) => {
-    const {first_name, last_name, email, role, password} = req.body;
+    const { first_name, last_name, email, role, password } = req.body;
     let user = {};
     user.first_name = first_name;
     user.last_name = last_name;
@@ -71,19 +87,19 @@ router.post('/register', async (req, res) => {
     let userModel = new User(user);
     await userModel.save()
         .then((user) => {
-            res.json({status: 'OK', user: user});
+            res.json({ status: 'OK', user: user });
         })
         .catch(error => {
-            const tempObj = {...error};
+            const tempObj = { ...error };
             delete tempObj.keyValue;
-            res.json({status: 'FAIL', details: tempObj}); // handle this from the backend
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
 
 // Route for login
 router.post('/login', async (req, res) => {
     const email = req.body.email;
-    await User.findOne({email: email})
+    await User.findOne({ email: email })
         .then((user) => {
             if (user) {
 
@@ -104,14 +120,14 @@ router.post('/login', async (req, res) => {
                     refreshToken: refreshToken
                 });
             } else {
-                res.json({status: 'FAIL', details: 'User not found'});
+                res.json({ status: 'FAIL', details: 'User not found' });
             }
         })
         .catch((error) => {
-            const tempObj = {...error};
+            const tempObj = { ...error };
             delete tempObj.keyValue;
             console.log('err', error.message)
-            res.json({status: 'FAIL', details: tempObj}); // handle this from the backend
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
 
@@ -127,8 +143,8 @@ router.post('/token', (req, res) => {
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if (err) return res.sendStatus(403);
-        const accessToken = generateAccessToken({email: user.email});
-        res.json({accessToken: accessToken});
+        const accessToken = generateAccessToken({ email: user.email });
+        res.json({ accessToken: accessToken });
     });
 });
 
@@ -156,7 +172,7 @@ function authenticateToken(req, res, next) {
 }
 
 function generateAccessToken(user) {
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '15s'});
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
 }
 
 const recipees = [
