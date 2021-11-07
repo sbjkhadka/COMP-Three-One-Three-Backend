@@ -20,7 +20,7 @@ router.get('/recipes', async (req, res) => {
         if (recipeRes) {
             recipe = recipeRes;
         } else {
-            res.json({ status: 'FAIL', details: 'Recipe not found' });
+            res.json({ status: 500, details: 'Recipe not found' });
         }
     })
     let recipeItem = recipe.recipeItem;
@@ -30,12 +30,7 @@ router.get('/recipes', async (req, res) => {
         var obj = recipeItem[i];
         await Ingredient.findOne({ _id: obj.ingredients }).then((ing) => {
             if (ing) {
-                var newIng = new Ingredient();
-                newIng.ingredientName = ing.ingredientName;
-                newIng.unitType = ing.unitType;
-                newIng.calorie = ing.calorie;
-
-                ingredients.push(newIng);
+                ingredients.push(ing);
             }
         })
     }
