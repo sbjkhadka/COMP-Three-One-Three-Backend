@@ -20,7 +20,7 @@ router.get('/recipes', async (req, res) => {
         if (recipeRes) {
             recipe = recipeRes;
         } else {
-            res.json({ status: 500, details: 'Recipe not found' });
+            res.json({ status: 404, details: 'Recipe not found' });
         }
     })
     let recipeItem = recipe.recipeItem;
@@ -43,7 +43,7 @@ router.get('/ingredients', async (req, res) => {
     if (ingredients) {
         res.json({ status: 200, ingredients: ingredients });
     } else {
-        res.json({ status: 'FAIL', details: 'Ingredients not found' })
+        res.json({ status: 404, details: 'Ingredients not found' })
     }
 })
 
@@ -52,7 +52,7 @@ router.get('/allRecipes', async (req, res) => {
     if (recipes) {
         res.json({ status: 200, recipes: recipes });
     } else {
-        res.json({ status: 'FAIL', details: 'recipes not found' })
+        res.json({ status: 404, details: 'recipes not found' })
     }
 })
 router.get('/globalRecipes', async (req, res) => {
@@ -64,7 +64,7 @@ router.get('/globalRecipes', async (req, res) => {
     if (filterRecipe) {
         res.json({ status: 200, filterRecipe: filterRecipe });
     } else {
-        res.json({ status: 'FAIL', details: 'recipes not found' })
+        res.json({ status: 404, details: 'recipes not found' })
     }
 })
 
@@ -77,7 +77,7 @@ router.post('/resetPassword', async (req, res) => {
 
     User.findOneAndUpdate(query, { $set: { password: userPassword } }, { upsert: false }, function (err, doc) {
         if (err) {
-            res.json({ status: 'Failed to find user.' })
+            res.json({ status: 404 })
         }
         else {
             res.json({ status: 200 })
@@ -90,10 +90,10 @@ router.post('/securityQuestion', async (req, res) => {
     const userEmail = req.body.email;
     await User.findOne({ email: userEmail }).then((data) => {
         if (data) {
-            res.json({ status: 'OK', securityQuestion: data.securityQuestion })
+            res.json({ status: 200, securityQuestion: data.securityQuestion })
         }
         else {
-            res.json({ status: 'User not found' })
+            res.json({ status: 404 })
         }
     })
 })
@@ -114,7 +114,7 @@ router.post('/register', async (req, res) => {
     let userModel = new User(user);
     await userModel.save()
         .then((user) => {
-            res.json({ status: 'OK', user: user });
+            res.json({ status: 200, user: user });
         })
         .catch(error => {
             const tempObj = { ...error };
@@ -141,13 +141,13 @@ router.post('/login', async (req, res) => {
                 const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
                 refreshTokens.push(refreshToken); // Put it in database or some file during production
                 res.json({
-                    status: 'OK',
+                    status: 200,
                     user: successfulUser,
                     accessToken: accessToken,
                     refreshToken: refreshToken
                 });
             } else {
-                res.json({ status: 'FAIL', details: 'User or password is incorrect' });
+                res.json({ status: 403, details: 'User or password is incorrect' });
             }
         })
         .catch((error) => {
