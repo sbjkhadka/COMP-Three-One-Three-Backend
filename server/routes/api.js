@@ -15,10 +15,10 @@ router.get('/', (req, res) => {
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
-    let recipe = new Recipe();
+    let recipes = []
     await Recipe.findOne({ _id: recipeId }).then((recipeRes) => {
         if (recipeRes) {
-            recipe = recipeRes;
+            recipes.push(recipeRes);
         } else {
             res.json({ status: 404, details: 'Recipe not found' });
         }
@@ -47,6 +47,30 @@ router.get('/ingredients', async (req, res) => {
     }
 })
 
+//API : get recipe by user email
+router.get('/userRecipes', async (req, res) => {
+    const email = req.query.email;
+    let userObjectId = '';
+
+    await User.findOne({ email: email }).then(async (userRes) => {
+        if (userRes) {
+            userObjectId = userRes._id;
+
+            let recipes = []
+            await Recipe.find({ user: userObjectId }).then((recipeRes) => {
+                if (recipeRes) {
+                    recipes.push(recipeRes);
+                    res.json({ status: 200, recipes: recipes });
+                }
+            })
+        }
+        else {
+            res.json({ status: 404, details: 'user not found' })
+        }
+    })
+
+})
+
 router.get('/allRecipes', async (req, res) => {
     const recipes = await Recipe.find();
     if (recipes) {
@@ -55,8 +79,8 @@ router.get('/allRecipes', async (req, res) => {
         res.json({ status: 404, details: 'recipes not found' })
     }
 })
-router.get('/globalRecipes', async (req, res) => {
 
+router.get('/globalRecipes', async (req, res) => {
     const filters = req.query;
     const recipes = await Recipe.find();
     const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
@@ -68,7 +92,7 @@ router.get('/globalRecipes', async (req, res) => {
     }
 })
 
-// route for recovering password
+// route for resetting password
 router.post('/resetPassword', async (req, res) => {
     const userEmail = req.body.email;
     const userPassword = req.body.password;
@@ -85,8 +109,23 @@ router.post('/resetPassword', async (req, res) => {
     });
 })
 
-// route for getting the security question by user email
+// API post route to compare answer
 router.post('/securityQuestion', async (req, res) => {
+    const userEmail = req.body.email;
+    const securityAnswer = req.body.securityAnswer;
+
+    await User.findOne({ email: userEmail }).then((user) => {
+        if (user && user.securityAnswer == securityAnswer) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    })
+})
+
+// route for getting the security question by user email
+router.get('/securityQuestion', async (req, res) => {
     const userEmail = req.body.email;
     await User.findOne({ email: userEmail }).then((data) => {
         if (data) {
