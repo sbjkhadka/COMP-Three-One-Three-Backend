@@ -15,10 +15,10 @@ router.get('/', (req, res) => {
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
-    let recipes = []
+    let recipe;
     await Recipe.findOne({ _id: recipeId }).then((recipeRes) => {
         if (recipeRes) {
-            recipes.push(recipeRes);
+            recipe = recipeRes;
         } else {
             res.json({ status: 404, details: 'Recipe not found' });
         }
