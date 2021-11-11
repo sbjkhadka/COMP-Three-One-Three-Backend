@@ -15,78 +15,160 @@ router.get('/', (req, res) => {
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
-    let recipe = {};
-    await Recipe.findOne({_id: recipeId}).then((recipe) => {
-        if (recipe) {
-            console.log(recipe);
-            res.json({status: 'OK', reicpe: recipe});
+    let recipe;
+    await Recipe.findOne({ _id: recipeId }).then((recipeRes) => {
+        if (recipeRes) {
+            recipe = recipeRes;
         } else {
-            res.json({status: 'FAIL', details: 'Recipe not found'})
+            res.json({ status: 404, details: 'Recipe not found' });
         }
     })
+    let recipeItem = recipe.recipeItem;
+    let ingredients = [];
+
+    for (var i = 0; i < recipeItem.length; i++) {
+        var obj = recipeItem[i];
+        await Ingredient.findOne({ _id: obj.ingredients }).then((ing) => {
+            if (ing) {
+                ingredients.push(ing);
+            }
+        })
+    }
+    res.json({ status: 200, ingredients: ingredients, recipe: recipe });
 })
 
 router.get('/ingredients', async (req, res) => {
 
     const ingredients = await Ingredient.find();
     if (ingredients) {
-        res.json({status: 'OK', ingredients: ingredients});
+        res.json({ status: 200, ingredients: ingredients });
     } else {
-        res.json({status: 'FAIL', details: 'Ingredients not found'})
+        res.json({ status: 404, details: 'Ingredients not found' })
     }
+})
+
+//API : get recipe by user email
+router.get('/userRecipes', async (req, res) => {
+    const email = req.query.email;
+    let userObjectId = '';
+
+    await User.findOne({ email: email }).then(async (userRes) => {
+        if (userRes) {
+            userObjectId = userRes._id;
+
+            let recipes = []
+            await Recipe.find({ user: userObjectId }).then((recipeRes) => {
+                if (recipeRes) {
+                    recipes.push(recipeRes);
+                    res.json({ status: 200, recipes: recipes });
+                }
+            })
+        }
+        else {
+            res.json({ status: 404, details: 'user not found' })
+        }
+    })
+
 })
 
 router.get('/allRecipes', async (req, res) => {
     const recipes = await Recipe.find();
     if (recipes) {
-        res.json({status: 'OK', recipes: recipes});
+        res.json({ status: 200, recipes: recipes });
     } else {
-        res.json({status: 'FAIL', details: 'recipes not found'})
+        res.json({ status: 404, details: 'recipes not found' })
     }
 })
-router.get('/globalRecipes', async (req, res) => {
 
+router.get('/globalRecipes', async (req, res) => {
     const filters = req.query;
     const recipes = await Recipe.find();
-    const filterRecipe= recipes.filter((recipe)=> recipe.isGlobal===true)
+    const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
 
-   if (filterRecipe){
-        res.json({status: 'OK', filterRecipe: filterRecipe});
+    if (filterRecipe) {
+        res.json({ status: 200, filterRecipe: filterRecipe });
     } else {
-        res.json({status: 'FAIL', details: 'recipes not found'})
+        res.json({ status: 404, details: 'recipes not found' })
     }
+})
+
+// route for resetting password
+router.post('/resetPassword', async (req, res) => {
+    const userEmail = req.body.email;
+    const userPassword = req.body.password;
+
+    var query = { 'email': userEmail };
+
+    User.findOneAndUpdate(query, { $set: { password: userPassword } }, { upsert: false }, function (err, doc) {
+        if (err) {
+            res.json({ status: 404 })
+        }
+        else {
+            res.json({ status: 200 })
+        }
+    });
+})
+
+// API post route to compare answer
+router.post('/securityQuestion', async (req, res) => {
+    const userEmail = req.body.email;
+    const securityAnswer = req.body.securityAnswer;
+
+    await User.findOne({ email: userEmail }).then((user) => {
+        if (user && user.securityAnswer == securityAnswer) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    })
+})
+
+// route for getting the security question by user email
+router.get('/securityQuestion', async (req, res) => {
+    const userEmail = req.body.email;
+    await User.findOne({ email: userEmail }).then((data) => {
+        if (data) {
+            res.json({ status: 200, securityQuestion: data.securityQuestion })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    })
 })
 
 
 // Route for registering a user
 router.post('/register', async (req, res) => {
-    const {first_name, last_name, email, role, password} = req.body;
+    const { first_name, last_name, email, role, password, securityQuestion, securityAnswer } = req.body;
     let user = {};
     user.first_name = first_name;
     user.last_name = last_name;
     user.email = email;
     user.role = role;
     user.password = password;
+    user.securityQuestion = securityQuestion;
+    user.securityAnswer = securityAnswer;
 
     let userModel = new User(user);
     await userModel.save()
         .then((user) => {
-            res.json({status: 'OK', user: user});
+            res.json({ status: 200, user: user });
         })
         .catch(error => {
-            const tempObj = {...error};
+            const tempObj = { ...error };
             delete tempObj.keyValue;
-            res.json({status: 'FAIL', details: tempObj}); // handle this from the backend
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
 
 // Route for login
 router.post('/login', async (req, res) => {
     const email = req.body.email;
-    await User.findOne({email: email})
+    const password = req.body.password;
+    await User.findOne({ email: email })
         .then((user) => {
-            if (user) {
-
+            if (user && user.password === password) {
                 console.log('user', user);
                 const successfulUser = {
                     email: user.email,
@@ -98,20 +180,20 @@ router.post('/login', async (req, res) => {
                 const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
                 refreshTokens.push(refreshToken); // Put it in database or some file during production
                 res.json({
-                    status: 'OK',
+                    status: 200,
                     user: successfulUser,
                     accessToken: accessToken,
                     refreshToken: refreshToken
                 });
             } else {
-                res.json({status: 'FAIL', details: 'User not found'});
+                res.json({ status: 403, details: 'User or password is incorrect' });
             }
         })
         .catch((error) => {
-            const tempObj = {...error};
+            const tempObj = { ...error };
             delete tempObj.keyValue;
             console.log('err', error.message)
-            res.json({status: 'FAIL', details: tempObj}); // handle this from the backend
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
 
@@ -127,8 +209,8 @@ router.post('/token', (req, res) => {
     if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if (err) return res.sendStatus(403);
-        const accessToken = generateAccessToken({email: user.email});
-        res.json({accessToken: accessToken});
+        const accessToken = generateAccessToken({ email: user.email });
+        res.json({ accessToken: accessToken });
     });
 });
 
@@ -156,7 +238,7 @@ function authenticateToken(req, res, next) {
 }
 
 function generateAccessToken(user) {
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '15s'});
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
 }
 
 const recipees = [

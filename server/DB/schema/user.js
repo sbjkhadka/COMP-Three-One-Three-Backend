@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 
 const user = new mongoose.Schema({
   email: {
-  type: String,
-  required: true,
-  match: /.+\@.+\..+/,
-  unique: true
+    type: String,
+    required: true,
+    match: /.+\@.+\..+/,
+    unique: true
   },
   first_name: {
     type: String,
@@ -15,12 +15,20 @@ const user = new mongoose.Schema({
     type: String,
   },
   role: {
-      type: String,
-      enum: ['admin','pseudo_admin','user'] // Can only accept these values from front end 
+    type: String,
+    enum: ['admin', 'pseudo_admin', 'user'] // Can only accept these values from front end 
   },
   password: {
-      type: String,
-      required: true
+    type: String,
+    required: true
+  },
+  securityQuestion: {
+    type: String,
+    required: true
+  },
+  securityAnswer: {
+    type: String,
+    required: true
   }
 });
 
