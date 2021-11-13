@@ -149,17 +149,17 @@ router.post('/securityQuestion', async (req, res) => {
 })
 
 // route for getting the security question by user email
-router.get('/securityQuestion', async (req, res) => {
-    const userEmail = req.body.email;
-    await User.findOne({ email: userEmail }).then((data) => {
-        if (data) {
-            res.json({ status: 200, securityQuestion: data.securityQuestion })
-        }
-        else {
-            res.json({ status: 404 })
-        }
-    })
-})
+router.post("/fetchSecurityQuestion", async (req, res) => {
+  const userEmail = req.body.email;
+  console.log('email', userEmail);
+  await User.findOne({ email: userEmail }).then((data) => {
+    if (data) {
+      res.json({ status: 200, securityQuestion: data.securityQuestion });
+    } else {
+      res.json({ status: 404 });
+    }
+  });
+});
 
 
 // Route for registering a user
@@ -168,11 +168,11 @@ router.post('/register', async (req, res) => {
     let user = {};
     user.first_name = first_name;
     user.last_name = last_name;
-    user.email = email;
+    user.email = email.trim();
     user.role = role;
     user.password = password;
     user.securityQuestion = securityQuestion;
-    user.securityAnswer = securityAnswer;
+    user.securityAnswer = securityAnswer.trim();
 
     let userModel = new User(user);
     await userModel.save()
