@@ -18,7 +18,7 @@ export const createIngredient= async (req, res) => {
 
 export const getIngredients = async (req, res) => {
     try {
-        const ingredients = await Ingredient.find();
+        const ingredients = await Ingredient.findAll();
         res.status(200).json(ingredients);
     } catch (error) {
         res.status(404).json({ message: error.message });
