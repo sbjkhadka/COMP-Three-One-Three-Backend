@@ -1,10 +1,9 @@
-
 const express = require('express');
-const Ingredient = require("mongoose").model("ingredients");
+const Ingredient = require('../DB/schema/ingredients')
 
 const router = express.Router();
 
-export const createIngredient= async (req, res) => {
+module.exports.createIngredient = async (req, res) => {
     const ingredients = req.body;
     console.log("create method run")
     const newIngredient = new Ingredient(ingredients);
@@ -16,11 +15,11 @@ export const createIngredient= async (req, res) => {
     }
 };
 
-export const getIngredients = async (req, res) => {
+module.exports.getIngredients = async (req, res) => {
     try {
-        const ingredients = await Ingredient.findAll();
-        res.status(200).json(ingredients);
+        const ingredients = await Ingredeint.findAll();
+        return { ingredients: ingredients }
     } catch (error) {
-        res.status(404).json({ message: error.message });
+        return { status: 404, message: 'No ingredients found' }
     }
 };
