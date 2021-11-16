@@ -115,6 +115,28 @@ router.get('/globalRecipes', async (req, res) => {
         res.json({ status: 404, details: 'recipes not found' })
     }
 })
+// Create new ingredients
+
+router.post('/ingredient', async (req, res) => {
+    const { ingredientName,  calorie,unitType, user } = req.body;
+    let ingredient = {};
+    ingredient.ingredientName = ingredientName;
+    ingredient.unitType = unitType;
+    ingredient.calorie = calorie;
+    ingredient.user = user;
+
+
+    let ingredientModel = new Ingredient(ingredient);
+    await ingredientModel.save()
+        .then((ingredient) => {
+            res.json({ status: 200, ingredient: ingredient });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+});
 
 // route for resetting password
 router.post('/resetPassword', async (req, res) => {
