@@ -154,7 +154,6 @@ router.post('/resetPassword', async (req, res) => {
         }
     });
 })
-
 // API post route to compare answer
 router.post('/securityQuestion', async (req, res) => {
     const userEmail = req.body.email;
