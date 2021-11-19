@@ -36,7 +36,15 @@ router.get('/recipes', async (req, res) => {
     }
     res.json({ status: 200, ingredients: ingredients, recipe: recipe });
 })
-
+/**
+ * @swagger
+ * /api/ingredients:
+ *  get:
+ *    description: Get all  recipes
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
 router.get('/ingredients', async (req, res) => {
 
     const ingredients = await Ingredient.find();
@@ -70,7 +78,15 @@ router.get('/userRecipes', async (req, res) => {
     })
 
 })
-
+/**
+ * @swagger
+ * /api/allRecipes:
+ *  get:
+ *    description: Get all  recipes
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
 router.get('/allRecipes', async (req, res) => {
     const recipes = await Recipe.find();
     if (recipes) {
@@ -79,7 +95,15 @@ router.get('/allRecipes', async (req, res) => {
         res.json({ status: 404, details: 'recipes not found' })
     }
 })
-
+/**
+ * @swagger
+ * /api/globalRecipes:
+ *  get:
+ *    description: Get global recipes
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
 router.get('/globalRecipes', async (req, res) => {
     const filters = req.query;
     const recipes = await Recipe.find();
@@ -253,3 +277,4 @@ const recipees = [
 ];
 
 let refreshTokens = []; // Put it in database or some file during production
+
