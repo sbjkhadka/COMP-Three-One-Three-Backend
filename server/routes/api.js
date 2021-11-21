@@ -140,8 +140,23 @@ router.get('/globalRecipes', async (req, res) => {
         res.json({ status: 404, details: 'recipes not found' })
     }
 })
-// Create new ingredients
 
+// get ingreient by id
+router.get('/ingredient', async (req, res) => {
+    // /e.g, http://localhost:3001/api/ingredient/?ingredientId=6184750a533568e45cdbc195
+    const ingredientId = req.query.ingredientId;
+    const ing = await Ingredient.findOne({ _id: ingredientId });
+    if (ing) {
+        res.json({ status: 200, ingredient: ing });
+    }
+    else {
+        res.json({ status: 500, details: 'No ingredient found' })
+    }
+
+})
+
+
+// Create new ingredient
 router.post('/ingredient', async (req, res) => {
     const { ingredientName, calorie, unitType, user } = req.body;
     let ingredient = {};
