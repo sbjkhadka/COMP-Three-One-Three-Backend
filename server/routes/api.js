@@ -11,6 +11,31 @@ router.get('/', (req, res) => {
     res.send('Testing... testing');
 });
 
+// add recipe 
+
+router.post('/recipes', async (req, res) => {
+    const { recipeName, description, price, recipePhoto, isGlobal, userEmail } = req.body;
+    let recipe = {};
+    recipe.recipeName = recipeName;
+    recipe.description = description;
+    recipe.price = price;
+    recipe.recipePhoto = recipePhoto;
+    recipe.isGlobal = isGlobal;
+
+    recipe.user = await User.findOne({ "email": userEmail });
+
+    let recipeModel = new Recipe(recipe);
+
+    await recipeModel.save()
+        .then((recipe) => {
+            res.json({ status: 200, recipe: recipe });
+        })
+        .catch(error => {
+            res.json({ status: 500, details: 'An error occured while processing the request' });
+        });
+})
+
+
 // get recipe by id
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
@@ -118,7 +143,7 @@ router.get('/globalRecipes', async (req, res) => {
 // Create new ingredients
 
 router.post('/ingredient', async (req, res) => {
-    const { ingredientName,  calorie,unitType, user } = req.body;
+    const { ingredientName, calorie, unitType, user } = req.body;
     let ingredient = {};
     ingredient.ingredientName = ingredientName;
     ingredient.unitType = unitType;
@@ -171,15 +196,15 @@ router.post('/securityQuestion', async (req, res) => {
 
 // route for getting the security question by user email
 router.post("/fetchSecurityQuestion", async (req, res) => {
-  const userEmail = req.body.email;
-  console.log('email', userEmail);
-  await User.findOne({ email: userEmail }).then((data) => {
-    if (data) {
-      res.json({ status: 200, securityQuestion: data.securityQuestion });
-    } else {
-      res.json({ status: 404 });
-    }
-  });
+    const userEmail = req.body.email;
+    console.log('email', userEmail);
+    await User.findOne({ email: userEmail }).then((data) => {
+        if (data) {
+            res.json({ status: 200, securityQuestion: data.securityQuestion });
+        } else {
+            res.json({ status: 404 });
+        }
+    });
 });
 
 
