@@ -137,7 +137,30 @@ router.post('/ingredient', async (req, res) => {
             res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
+// Create new ingredients
 
+router.post('/recipe', async (req, res) => {
+    const { recipeName,  description,price,recipePhoto,isGlobal,recipeItem, user } = req.body;
+    let recipe = {};
+    recipe.recipeName = recipeName;
+    recipe.description = description;
+    recipe.price = price;
+    recipe.recipePhoto = recipePhoto;
+    recipe.isGlobal = isGlobal;
+    recipe.recipeItem = recipeItem;
+    recipe.user = user;
+    console.log("Recipe", recipe)
+    let recipeModel = new Recipe(recipe);
+    await recipeModel.save()
+        .then((recipe) => {
+            res.json({ status: 200, recipe: recipe });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+});
 // route for resetting password
 router.post('/resetPassword', async (req, res) => {
     const userEmail = req.body.email;
