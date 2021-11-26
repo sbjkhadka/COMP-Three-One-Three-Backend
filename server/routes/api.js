@@ -11,31 +11,6 @@ router.get('/', (req, res) => {
     res.send('Testing... testing');
 });
 
-// add recipe 
-
-router.post('/recipes', async (req, res) => {
-    const { recipeName, description, price, recipePhoto, isGlobal, userEmail } = req.body;
-    let recipe = {};
-    recipe.recipeName = recipeName;
-    recipe.description = description;
-    recipe.price = price;
-    recipe.recipePhoto = recipePhoto;
-    recipe.isGlobal = isGlobal;
-
-    recipe.user = await User.findOne({ "email": userEmail });
-
-    let recipeModel = new Recipe(recipe);
-
-    await recipeModel.save()
-        .then((recipe) => {
-            res.json({ status: 200, recipe: recipe });
-        })
-        .catch(error => {
-            res.json({ status: 500, details: 'An error occured while processing the request' });
-        });
-})
-
-
 // get recipe by id
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
@@ -80,28 +55,20 @@ router.get('/ingredients', async (req, res) => {
     }
 })
 
-//API : get recipe by user email
+//API : get recipe by user email e.g, http://localhost:3001/api/userRecipes/?email=ty6@gmail.com
 router.get('/userRecipes', async (req, res) => {
     const email = req.query.email;
-    let userObjectId = '';
-
-    await User.findOne({ email: email }).then(async (userRes) => {
-        if (userRes) {
-            userObjectId = userRes._id;
-
-            let recipes = []
-            await Recipe.find({ user: userObjectId }).then((recipeRes) => {
-                if (recipeRes) {
-                    recipes.push(recipeRes);
-                    res.json({ status: 200, recipes: recipes });
-                }
-            })
+    console.log(email)
+    let recipes = []
+    await Recipe.find({ userEmail: email }).then((recipeRes) => {
+        if (recipeRes) {
+            recipes.push(recipeRes);
+            res.json({ status: 200, recipes: recipes });
         }
         else {
-            res.json({ status: 404, details: 'user not found' })
+            res.json({ status: 404, details: 'user not found' });
         }
     })
-
 })
 /**
  * @swagger
@@ -132,7 +99,7 @@ router.get('/allRecipes', async (req, res) => {
 router.get('/globalRecipes', async (req, res) => {
     const filters = req.query;
     const recipes = await Recipe.find();
-    const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
+    const filterRecipe = recipes.filter((recipe) => recipe.isPrivate === false)
 
     if (filterRecipe) {
         res.json({ status: 200, filterRecipe: filterRecipe });
@@ -177,18 +144,19 @@ router.post('/ingredient', async (req, res) => {
             res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
-// Create new ingredients
 
+// Create new recipe & ingredients
 router.post('/recipe', async (req, res) => {
-    const { recipeName,  description,price,recipePhoto,isGlobal,recipeItem, user } = req.body;
+    const { recipeName, description, price, recipePhoto, isPrivate, recipeItem, user, userEmail } = req.body;
     let recipe = {};
     recipe.recipeName = recipeName;
     recipe.description = description;
     recipe.price = price;
     recipe.recipePhoto = recipePhoto;
-    recipe.isGlobal = isGlobal;
+    recipe.isPrivate = isPrivate;
     recipe.recipeItem = recipeItem;
     recipe.user = user;
+    recipe.userEmail = userEmail;
     console.log("Recipe", recipe)
     let recipeModel = new Recipe(recipe);
     await recipeModel.save()
@@ -276,14 +244,17 @@ router.post('/login', async (req, res) => {
     const password = req.body.password;
     await User.findOne({ email: email })
         .then((user) => {
+            console.log(user);
             if (user && user.password === password) {
-                console.log('user', user);
+
                 const successfulUser = {
+                    _id: user._id,
                     email: user.email,
                     firstName: user.first_name,
                     last_name: user.last_name,
                     role: user.role,
                 };
+                console.log(successfulUser)
                 const accessToken = generateAccessToken(successfulUser);
                 const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
                 refreshTokens.push(refreshToken); // Put it in database or some file during production
