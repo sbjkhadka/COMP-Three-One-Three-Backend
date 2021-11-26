@@ -119,7 +119,6 @@ router.get('/ingredient', async (req, res) => {
     else {
         res.json({ status: 500, details: 'No ingredient found' })
     }
-
 })
 
 
@@ -157,7 +156,6 @@ router.post('/recipe', async (req, res) => {
     recipe.recipeItem = recipeItem;
     recipe.user = user;
     recipe.userEmail = userEmail;
-    console.log("Recipe", recipe)
     let recipeModel = new Recipe(recipe);
     await recipeModel.save()
         .then((recipe) => {
@@ -185,6 +183,32 @@ router.post('/resetPassword', async (req, res) => {
         }
     });
 })
+
+router.put('/editRecipe', async (req, res) => {
+    // /e.g, http://localhost:3001/api/editRecipe/?recipeId=6184781d533568e45cdbc19c
+    const recipeId = req.query.recipeId;
+    const { recipeName, description, price, recipePhoto, isPrivate, recipeItem } = req.body;
+
+    var query = {
+        "_id": recipeId
+    };
+
+    Recipe.findOneAndUpdate(query, {
+        $set: {
+            recipeName: recipeName, description: description, price: price,
+            recipePhoto: recipePhoto, isPrivate: isPrivate, recipeItem: recipeItem
+        }
+    }, { upsert: false }, function (err, doc) {
+        if (err) {
+            res.json({ status: 404 })
+        }
+        else {
+            res.json({ status: 200 })
+        }
+    });
+
+})
+
 // API post route to compare answer
 router.post('/securityQuestion', async (req, res) => {
     const userEmail = req.body.email;
