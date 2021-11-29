@@ -14,7 +14,10 @@ const ingredients = new mongoose.Schema({
     user: {
         type:mongoose.Schema.Types.ObjectId,
         ref: 'user',
-    }
+    },
+     userEmail: {
+    type: String,
+}
 });
 
 module.exports = User = mongoose.model('ingredients', ingredients);
