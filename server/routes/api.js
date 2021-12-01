@@ -182,14 +182,30 @@ router.get('/ingredientByName', async (req, res) => {
     }
 })
 
+// delete ingredient by ingredient id
+router.delete('/ingredients', (req, res) => {
+    // e.g., http://localhost:3001/api/ingredients/?ingredientId=61a801c0a5e53cbf6408af73
+    const ingredientId = req.query.ingredientId;
+    Ingredient.deleteOne({ _id: ingredientId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+
+})
+
 // Create new ingredient
 router.post('/ingredient', async (req, res) => {
-    const { ingredientName, calorie, unitType, user } = req.body;
+    const { ingredientName, calorie, unitType, user, userEmail } = req.body;
     let ingredient = {};
     ingredient.ingredientName = ingredientName;
     ingredient.unitType = unitType;
     ingredient.calorie = calorie;
     ingredient.user = user;
+    ingredient.userEmail = userEmail;
 
 
     let ingredientModel = new Ingredient(ingredient);
@@ -304,6 +320,7 @@ router.put('/editRecipe', async (req, res) => {
     });
 })
 
+// delete recipe
 router.delete('/recipe', (req, res) => {
     // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
@@ -315,7 +332,6 @@ router.delete('/recipe', (req, res) => {
             res.json({ status: 404 })
         }
     });
-
 })
 
 // API post route to compare answer
