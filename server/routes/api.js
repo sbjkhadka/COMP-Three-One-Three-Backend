@@ -38,9 +38,27 @@ router.get('/recipes', async (req, res) => {
 })
 /**
  * @swagger
+ * /api/users:
+ *  get:
+ *    description: Get all  users
+ *    responses:
+ *      '200':
+ *        description: A successful response
+ */
+router.get('/users', async (req, res) => {
+
+    const users = await User.find();
+    if (users) {
+        res.json({ status: 200, users: users });
+    } else {
+        res.json({ status: 404, details: 'User not found' })
+    }
+})
+/**
+ * @swagger
  * /api/ingredients:
  *  get:
- *    description: Get all  recipes
+ *    description: Get all  ingredients
  *    responses:
  *      '200':
  *        description: A successful response
@@ -53,6 +71,37 @@ router.get('/ingredients', async (req, res) => {
     } else {
         res.json({ status: 404, details: 'Ingredients not found' })
     }
+})
+// Get all ingredient by user ID
+router.get('/ingredientsByUserId', async (req, res) => {
+    // /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
+    const userId = req.query.userId;
+    let ingredients = []
+    await Ingredient.find({ userId: userId }).then((ingredientRes) => {
+        if (ingredientRes) {
+            ingredients.push(ingredientRes);
+            res.json({ status: 200, recipes: ingredients });
+        }
+        else {
+            res.json({ status: 404, details: 'Ingredient not found' });
+        }
+    })
+})
+
+//Get all ingredient by user Email
+router.get('/ingredientsByUserEmail', async (req, res) => {
+    //e.g, http://localhost:3001/api/ingredientsByUserEmail/?userEmail=61847622533568e45cdbc197
+    const userEmail = req.query.userEmail;
+    let ingredients = []
+    await Ingredient.find({ userEmail: userEmail }).then((ingredientRes) => {
+        if (ingredientRes) {
+            ingredients.push(ingredientRes);
+            res.json({ status: 200, recipes: ingredients });
+        }
+        else {
+            res.json({ status: 404, details: 'Ingredient not found' });
+        }
+    })
 })
 
 //API : get recipe by user email e.g, http://localhost:3001/api/userRecipes/?email=ty6@gmail.com
@@ -108,7 +157,7 @@ router.get('/globalRecipes', async (req, res) => {
     }
 })
 
-// get ingreient by id
+// get ingredient by id
 router.get('/ingredient', async (req, res) => {
     // /e.g, http://localhost:3001/api/ingredient/?ingredientId=6184750a533568e45cdbc195
     const ingredientId = req.query.ingredientId;
@@ -120,16 +169,43 @@ router.get('/ingredient', async (req, res) => {
         res.json({ status: 500, details: 'No ingredient found' })
     }
 })
+//Get ingredient by name
+router.get('/ingredientByName', async (req, res) => {
+    // /e.g, http://localhost:3001/api/ingredientByName/?ingredientName=Hawaiian Pizza
+    const ingredientName = req.query.ingredientName;
+    const ingredient = await Ingredient.findOne({ ingredientName: ingredientName });
+    if (ingredient) {
+        res.json({ status: 200, ingredient: ingredient });
+    }
+    else {
+        res.json({ status: 500, details: 'No ingredient found' })
+    }
+})
 
+// delete ingredient by ingredient id
+router.delete('/ingredients', (req, res) => {
+    // e.g., http://localhost:3001/api/ingredients/?ingredientId=61a801c0a5e53cbf6408af73
+    const ingredientId = req.query.ingredientId;
+    Ingredient.deleteOne({ _id: ingredientId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+
+})
 
 // Create new ingredient
 router.post('/ingredient', async (req, res) => {
-    const { ingredientName, calorie, unitType, user } = req.body;
+    const { ingredientName, calorie, unitType, user, userEmail } = req.body;
     let ingredient = {};
     ingredient.ingredientName = ingredientName;
     ingredient.unitType = unitType;
     ingredient.calorie = calorie;
     ingredient.user = user;
+    ingredient.userEmail = userEmail;
 
 
     let ingredientModel = new Ingredient(ingredient);
@@ -143,6 +219,42 @@ router.post('/ingredient', async (req, res) => {
             res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
+
+// get recipe by id
+router.get('/recipe', async (req, res) => {
+    // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
+    const recipeId = req.query.recipeId;
+    const recipe = await Recipe.findOne({ _id: recipeId });
+    if (recipe) {
+        res.json({ status: 200, recipe: recipe });
+    }
+    else {
+        res.json({ status: 500, details: 'No recipe found' })
+    }
+})
+//Generate grocery list
+router.get('/groceryList', async (req, res) => {
+    // /e.g, http://localhost:3001/api/groceryList/?recipeId=6184750a533568e45cdbc195
+    const recipeId = req.query.recipeId;
+    // const recipe = await Recipe.findOne({ _id: recipeId });
+    let recipeName
+    let recipeItems = []
+    await Recipe.find({ _id: recipeId }).then((recipeRes) => {
+        console.log(recipeRes)
+        recipeName = recipeRes[0].recipeName
+        console.log("recipe Name", recipeName)
+        // res.json({ status: 200, recipes: recipeRes});
+        if (recipeRes) {
+            recipeItems.push(recipeRes[0].recipeItem);
+            res.json({ status: 200, recipes: recipeItems });
+        }
+        else {
+            res.json({ status: 404, details: 'user not found' });
+        }
+    })
+
+})
+
 
 // Create new recipe & ingredients
 router.post('/recipe', async (req, res) => {
@@ -206,7 +318,20 @@ router.put('/editRecipe', async (req, res) => {
             res.json({ status: 200 })
         }
     });
+})
 
+// delete recipe
+router.delete('/recipe', (req, res) => {
+    // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
+    const recipeId = req.query.recipeId;
+    Recipe.deleteOne({ _id: recipeId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
 })
 
 // API post route to compare answer
