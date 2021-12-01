@@ -55,6 +55,20 @@ router.get('/users', async (req, res) => {
         res.json({ status: 404, details: 'User not found' })
     }
 })
+
+router.delete('/users', async (req, res) => {
+    // e.g., http://localhost:3001/api/users/?userEmail=test@deelete.com
+    const userEmail = req.query.userEmail;
+    
+    User.deleteOne({ email: userEmail }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+})
 /**
  * @swagger
  * /api/ingredients:
@@ -195,7 +209,6 @@ router.delete('/ingredients', (req, res) => {
             res.json({ status: 404 })
         }
     });
-
 })
 
 // Create new ingredient
