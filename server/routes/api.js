@@ -58,7 +58,7 @@ router.get('/users', async (req, res) => {
  * @swagger
  * /api/ingredients:
  *  get:
- *    description: Get all  recipes
+ *    description: Get all  ingredients
  *    responses:
  *      '200':
  *        description: A successful response
@@ -74,7 +74,7 @@ router.get('/ingredients', async (req, res) => {
 })
 // Get all ingredient by user ID
 router.get('/ingredientsByUserId', async (req, res) => {
-// /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
+    // /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
     const userId = req.query.userId;
     let ingredients = []
     await Ingredient.find({ userId: userId }).then((ingredientRes) => {
@@ -91,7 +91,7 @@ router.get('/ingredientsByUserId', async (req, res) => {
 //Get all ingredient by user Email
 router.get('/ingredientsByUserEmail', async (req, res) => {
     //e.g, http://localhost:3001/api/ingredientsByUserEmail/?userEmail=61847622533568e45cdbc197
-    const userEmail= req.query.userEmail;
+    const userEmail = req.query.userEmail;
     let ingredients = []
     await Ingredient.find({ userEmail: userEmail }).then((ingredientRes) => {
         if (ingredientRes) {
@@ -220,14 +220,14 @@ router.get('/recipe', async (req, res) => {
 router.get('/groceryList', async (req, res) => {
     // /e.g, http://localhost:3001/api/groceryList/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
-   // const recipe = await Recipe.findOne({ _id: recipeId });
+    // const recipe = await Recipe.findOne({ _id: recipeId });
     let recipeName
-    let recipeItems=[]
+    let recipeItems = []
     await Recipe.find({ _id: recipeId }).then((recipeRes) => {
         console.log(recipeRes)
-        recipeName=recipeRes[0].recipeName
-        console.log("recipe Name",recipeName)
-       // res.json({ status: 200, recipes: recipeRes});
+        recipeName = recipeRes[0].recipeName
+        console.log("recipe Name", recipeName)
+        // res.json({ status: 200, recipes: recipeRes});
         if (recipeRes) {
             recipeItems.push(recipeRes[0].recipeItem);
             res.json({ status: 200, recipes: recipeItems });
@@ -300,6 +300,19 @@ router.put('/editRecipe', async (req, res) => {
         }
         else {
             res.json({ status: 200 })
+        }
+    });
+})
+
+router.delete('/recipe', (req, res) => {
+    // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
+    const recipeId = req.query.recipeId;
+    Recipe.deleteOne({ _id: recipeId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
         }
     });
 
