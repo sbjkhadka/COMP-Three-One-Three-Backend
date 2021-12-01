@@ -55,28 +55,20 @@ router.get('/ingredients', async (req, res) => {
     }
 })
 
-//API : get recipe by user email
+//API : get recipe by user email e.g, http://localhost:3001/api/userRecipes/?email=ty6@gmail.com
 router.get('/userRecipes', async (req, res) => {
     const email = req.query.email;
-    let userObjectId = '';
-
-    await User.findOne({ email: email }).then(async (userRes) => {
-        if (userRes) {
-            userObjectId = userRes._id;
-
-            let recipes = []
-            await Recipe.find({ user: userObjectId }).then((recipeRes) => {
-                if (recipeRes) {
-                    recipes.push(recipeRes);
-                    res.json({ status: 200, recipes: recipes });
-                }
-            })
+    console.log(email)
+    let recipes = []
+    await Recipe.find({ userEmail: email }).then((recipeRes) => {
+        if (recipeRes) {
+            recipes.push(recipeRes);
+            res.json({ status: 200, recipes: recipes });
         }
         else {
-            res.json({ status: 404, details: 'user not found' })
+            res.json({ status: 404, details: 'user not found' });
         }
     })
-
 })
 /**
  * @swagger
@@ -107,7 +99,7 @@ router.get('/allRecipes', async (req, res) => {
 router.get('/globalRecipes', async (req, res) => {
     const filters = req.query;
     const recipes = await Recipe.find();
-    const filterRecipe = recipes.filter((recipe) => recipe.isGlobal === true)
+    const filterRecipe = recipes.filter((recipe) => recipe.isPrivate === false)
 
     if (filterRecipe) {
         res.json({ status: 200, filterRecipe: filterRecipe });
@@ -116,6 +108,65 @@ router.get('/globalRecipes', async (req, res) => {
     }
 })
 
+// get ingreient by id
+router.get('/ingredient', async (req, res) => {
+    // /e.g, http://localhost:3001/api/ingredient/?ingredientId=6184750a533568e45cdbc195
+    const ingredientId = req.query.ingredientId;
+    const ing = await Ingredient.findOne({ _id: ingredientId });
+    if (ing) {
+        res.json({ status: 200, ingredient: ing });
+    }
+    else {
+        res.json({ status: 500, details: 'No ingredient found' })
+    }
+})
+
+
+// Create new ingredient
+router.post('/ingredient', async (req, res) => {
+    const { ingredientName, calorie, unitType, user } = req.body;
+    let ingredient = {};
+    ingredient.ingredientName = ingredientName;
+    ingredient.unitType = unitType;
+    ingredient.calorie = calorie;
+    ingredient.user = user;
+
+
+    let ingredientModel = new Ingredient(ingredient);
+    await ingredientModel.save()
+        .then((ingredient) => {
+            res.json({ status: 200, ingredient: ingredient });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+});
+
+// Create new recipe & ingredients
+router.post('/recipe', async (req, res) => {
+    const { recipeName, description, price, recipePhoto, isPrivate, recipeItem, user, userEmail } = req.body;
+    let recipe = {};
+    recipe.recipeName = recipeName;
+    recipe.description = description;
+    recipe.price = price;
+    recipe.recipePhoto = recipePhoto;
+    recipe.isPrivate = isPrivate;
+    recipe.recipeItem = recipeItem;
+    recipe.user = user;
+    recipe.userEmail = userEmail;
+    let recipeModel = new Recipe(recipe);
+    await recipeModel.save()
+        .then((recipe) => {
+            res.json({ status: 200, recipe: recipe });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+});
 // route for resetting password
 router.post('/resetPassword', async (req, res) => {
     const userEmail = req.body.email;
@@ -131,6 +182,31 @@ router.post('/resetPassword', async (req, res) => {
             res.json({ status: 200 })
         }
     });
+})
+
+router.put('/editRecipe', async (req, res) => {
+    // /e.g, http://localhost:3001/api/editRecipe/?recipeId=6184781d533568e45cdbc19c
+    const recipeId = req.query.recipeId;
+    const { recipeName, description, price, recipePhoto, isPrivate, recipeItem } = req.body;
+
+    var query = {
+        "_id": recipeId
+    };
+
+    Recipe.findOneAndUpdate(query, {
+        $set: {
+            recipeName: recipeName, description: description, price: price,
+            recipePhoto: recipePhoto, isPrivate: isPrivate, recipeItem: recipeItem
+        }
+    }, { upsert: false }, function (err, doc) {
+        if (err) {
+            res.json({ status: 404 })
+        }
+        else {
+            res.json({ status: 200 })
+        }
+    });
+
 })
 
 // API post route to compare answer
@@ -150,15 +226,15 @@ router.post('/securityQuestion', async (req, res) => {
 
 // route for getting the security question by user email
 router.post("/fetchSecurityQuestion", async (req, res) => {
-  const userEmail = req.body.email;
-  console.log('email', userEmail);
-  await User.findOne({ email: userEmail }).then((data) => {
-    if (data) {
-      res.json({ status: 200, securityQuestion: data.securityQuestion });
-    } else {
-      res.json({ status: 404 });
-    }
-  });
+    const userEmail = req.body.email;
+    console.log('email', userEmail);
+    await User.findOne({ email: userEmail }).then((data) => {
+        if (data) {
+            res.json({ status: 200, securityQuestion: data.securityQuestion });
+        } else {
+            res.json({ status: 404 });
+        }
+    });
 });
 
 
@@ -192,14 +268,17 @@ router.post('/login', async (req, res) => {
     const password = req.body.password;
     await User.findOne({ email: email })
         .then((user) => {
+            console.log(user);
             if (user && user.password === password) {
-                console.log('user', user);
+
                 const successfulUser = {
+                    _id: user._id,
                     email: user.email,
                     firstName: user.first_name,
                     last_name: user.last_name,
                     role: user.role,
                 };
+                console.log(successfulUser)
                 const accessToken = generateAccessToken(successfulUser);
                 const refreshToken = jwt.sign(successfulUser, process.env.REFRESH_TOKEN_SECRET);
                 refreshTokens.push(refreshToken); // Put it in database or some file during production

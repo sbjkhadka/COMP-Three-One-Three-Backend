@@ -24,3 +24,13 @@ module.exports.createUser = async (first_name, last_name, email, role, password,
             throw error;
         });
 };
+
+module.exports.getUserById = async (userId) => {
+    await User.find({ _id: userId }).then((user) => {
+        if (user) {
+            return { user: user }
+        }
+    }).catch(error => {
+        throw error;
+    })
+}

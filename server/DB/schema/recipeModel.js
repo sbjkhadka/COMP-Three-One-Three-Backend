@@ -32,6 +32,9 @@ const recipe = new mongoose.Schema({
     ref: "user",
     required: true,
   },
+  userEmail: {
+    type: String,
+  }
 });
 
 module.exports = User = mongoose.model("recipe", recipe);
