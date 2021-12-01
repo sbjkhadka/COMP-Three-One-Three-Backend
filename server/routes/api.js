@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../DB/schema/user');
 const Recipe = require('../DB/schema/recipeModel');
 const Ingredient = require('../DB/schema/ingredients');
+const Feedback = require('../DB/schema/feedback');
 const jwt = require('jsonwebtoken');
 
 router.use(express.json());
@@ -332,6 +333,29 @@ router.delete('/recipe', (req, res) => {
             res.json({ status: 404 })
         }
     });
+})
+
+// post feedback or support
+router.post('/feedback', async(req, res) => {
+    // /e.g, http://localhost:3001/api/feedback/
+    const { userEmail, message, user, type } = req.body;
+
+    let feedback = {};
+    feedback.userEmail = userEmail;
+    feedback.user = user;
+    feedback.message = message;
+    feedback.type = type;
+
+    let feedbackModel = new Feedback(feedback);
+    await feedbackModel.save()
+        .then((response) => {
+            res.json({ status: 200, feedback: response });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
 })
 
 // API post route to compare answer
