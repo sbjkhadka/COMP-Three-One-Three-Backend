@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../DB/schema/user');
 const Recipe = require('../DB/schema/recipeModel');
 const Ingredient = require('../DB/schema/ingredients');
+const Feedback = require('../DB/schema/feedback');
 const jwt = require('jsonwebtoken');
 
 router.use(express.json());
@@ -53,6 +54,20 @@ router.get('/users', async (req, res) => {
     } else {
         res.json({ status: 404, details: 'User not found' })
     }
+})
+
+router.delete('/users', async (req, res) => {
+    // e.g., http://localhost:3001/api/users/?userEmail=test@deelete.com
+    const userEmail = req.query.userEmail;
+    
+    User.deleteOne({ email: userEmail }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
 })
 /**
  * @swagger
@@ -194,7 +209,6 @@ router.delete('/ingredients', (req, res) => {
             res.json({ status: 404 })
         }
     });
-
 })
 
 // Create new ingredient
@@ -332,6 +346,44 @@ router.delete('/recipe', (req, res) => {
             res.json({ status: 404 })
         }
     });
+})
+
+// post feedback or support
+router.post('/feedback', async (req, res) => {
+    // /e.g, http://localhost:3001/api/feedback/
+    const { userEmail, message, user, type } = req.body;
+
+    let feedback = {};
+    feedback.userEmail = userEmail;
+    feedback.user = user;
+    feedback.message = message;
+    feedback.type = type;
+
+    let feedbackModel = new Feedback(feedback);
+    await feedbackModel.save()
+        .then((response) => {
+            res.json({ status: 200, feedback: response });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+})
+
+// get feedbacks by type
+router.get('/feedback', async (req, res) => {
+    // e.g., http://localhost:3001/api/feedback/?type=Support
+    const type = req.query.type
+
+    await Feedback.find({ type: type }, function (err, result) {
+        if (err) {
+            console.log(err);
+            res.json({ status: 404 })
+        } else {
+            res.json({ status: 200, feedbacks: result });
+        }
+    }).clone().catch(function (err) { console.log(err) })
 })
 
 // API post route to compare answer
