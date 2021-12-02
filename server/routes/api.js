@@ -111,7 +111,7 @@ router.get('/ingredientsByUserEmail', async (req, res) => {
     await Ingredient.find({ userEmail: userEmail }).then((ingredientRes) => {
         if (ingredientRes) {
             ingredients.push(ingredientRes);
-            res.json({ status: 200, recipes: ingredients });
+            res.json({ status: 200, ingredients: ingredients });
         }
         else {
             res.json({ status: 404, details: 'Ingredient not found' });
