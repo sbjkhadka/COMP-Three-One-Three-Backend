@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../DB/schema/user');
 const Recipe = require('../DB/schema/recipeModel');
 const Ingredient = require('../DB/schema/ingredients');
+const Feedback = require('../DB/schema/feedback');
 const jwt = require('jsonwebtoken');
 
 router.use(express.json());
@@ -53,11 +54,25 @@ router.get('/users', async (req, res) => {
         res.json({ status: 404, details: 'User not found' })
     }
 })
+
+router.delete('/users', async (req, res) => {
+    // e.g., http://localhost:3001/api/users/?userEmail=test@deelete.com
+    const userEmail = req.query.userEmail;
+    
+    User.deleteOne({ email: userEmail }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+})
 /**
  * @swagger
  * /api/ingredients:
  *  get:
- *    description: Get all  recipes
+ *    description: Get all  ingredients
  *    responses:
  *      '200':
  *        description: A successful response
@@ -73,7 +88,7 @@ router.get('/ingredients', async (req, res) => {
 })
 // Get all ingredient by user ID
 router.get('/ingredientsByUserId', async (req, res) => {
-// /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
+    // /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
     const userId = req.query.userId;
     let ingredients = []
     await Ingredient.find({ userId: userId }).then((ingredientRes) => {
@@ -90,12 +105,12 @@ router.get('/ingredientsByUserId', async (req, res) => {
 //Get all ingredient by user Email
 router.get('/ingredientsByUserEmail', async (req, res) => {
     //e.g, http://localhost:3001/api/ingredientsByUserEmail/?userEmail=61847622533568e45cdbc197
-    const userEmail= req.query.userEmail;
+    const userEmail = req.query.userEmail;
     let ingredients = []
     await Ingredient.find({ userEmail: userEmail }).then((ingredientRes) => {
         if (ingredientRes) {
             ingredients.push(ingredientRes);
-            res.json({ status: 200, recipes: ingredients });
+            res.json({ status: 200, ingredients: ingredients });
         }
         else {
             res.json({ status: 404, details: 'Ingredient not found' });
@@ -243,14 +258,29 @@ router.get('/ingredientByName', async (req, res) => {
     }
 })
 
+// delete ingredient by ingredient id
+router.delete('/ingredients', (req, res) => {
+    // e.g., http://localhost:3001/api/ingredients/?ingredientId=61a801c0a5e53cbf6408af73
+    const ingredientId = req.query.ingredientId;
+    Ingredient.deleteOne({ _id: ingredientId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+})
+
 // Create new ingredient
 router.post('/ingredient', async (req, res) => {
-    const { ingredientName, calorie, unitType, user } = req.body;
+    const { ingredientName, calorie, unitType, user, userEmail } = req.body;
     let ingredient = {};
     ingredient.ingredientName = ingredientName;
     ingredient.unitType = unitType;
     ingredient.calorie = calorie;
     ingredient.user = user;
+    ingredient.userEmail = userEmail;
 
 
     let ingredientModel = new Ingredient(ingredient);
@@ -281,14 +311,14 @@ router.get('/recipe', async (req, res) => {
 router.get('/groceryList', async (req, res) => {
     // /e.g, http://localhost:3001/api/groceryList/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
-   // const recipe = await Recipe.findOne({ _id: recipeId });
+    // const recipe = await Recipe.findOne({ _id: recipeId });
     let recipeName
-    let recipeItems=[]
+    let recipeItems = []
     await Recipe.find({ _id: recipeId }).then((recipeRes) => {
         console.log(recipeRes)
-        recipeName=recipeRes[0].recipeName
-        console.log("recipe Name",recipeName)
-       // res.json({ status: 200, recipes: recipeRes});
+        recipeName = recipeRes[0].recipeName
+        console.log("recipe Name", recipeName)
+        // res.json({ status: 200, recipes: recipeRes});
         if (recipeRes) {
             recipeItems.push(recipeRes[0].recipeItem);
             res.json({ status: 200, recipes: recipeItems });
@@ -363,7 +393,58 @@ router.put('/editRecipe', async (req, res) => {
             res.json({ status: 200 })
         }
     });
+})
 
+// delete recipe
+router.delete('/recipe', (req, res) => {
+    // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
+    const recipeId = req.query.recipeId;
+    Recipe.deleteOne({ _id: recipeId }, function (err) {
+        if (!err) {
+            res.json({ status: 200 })
+        }
+        else {
+            res.json({ status: 404 })
+        }
+    });
+})
+
+// post feedback or support
+router.post('/feedback', async (req, res) => {
+    // /e.g, http://localhost:3001/api/feedback/
+    const { userEmail, message, user, type } = req.body;
+
+    let feedback = {};
+    feedback.userEmail = userEmail;
+    feedback.user = user;
+    feedback.message = message;
+    feedback.type = type;
+
+    let feedbackModel = new Feedback(feedback);
+    await feedbackModel.save()
+        .then((response) => {
+            res.json({ status: 200, feedback: response });
+        })
+        .catch(error => {
+            const tempObj = { ...error };
+            delete tempObj.keyValue;
+            res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
+        });
+})
+
+// get feedbacks by type
+router.get('/feedback', async (req, res) => {
+    // e.g., http://localhost:3001/api/feedback/?type=Support
+    const type = req.query.type
+
+    await Feedback.find({ type: type }, function (err, result) {
+        if (err) {
+            console.log(err);
+            res.json({ status: 404 })
+        } else {
+            res.json({ status: 200, feedbacks: result });
+        }
+    }).clone().catch(function (err) { console.log(err) })
 })
 
 // API post route to compare answer
