@@ -372,9 +372,24 @@ router.post('/feedback', async (req, res) => {
 })
 
 // get all feedbacks
-router.get('/feedback', async (req, res) => {
+router.get('/allFeedbacks', async (req, res) => {
     // e.g., http://localhost:3001/api/feedback/
     await Feedback.find({}, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.json({ status: 404 })
+        } else {
+            res.json({ status: 200, feedbacks: result });
+        }
+    }).clone().catch(function (err) { console.log(err) })
+})
+
+// get feedbacks by type
+router.get('/feedback', async (req, res) => {
+    // e.g., http://localhost:3001/api/feedback/?type=Support
+    const type = req.query.type
+
+    await Feedback.find({ type: type }, function (err, result) {
         if (err) {
             console.log(err);
             res.json({ status: 404 })
