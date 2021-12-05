@@ -351,13 +351,14 @@ router.delete('/recipe', (req, res) => {
 // post feedback or support
 router.post('/feedback', async (req, res) => {
     // /e.g, http://localhost:3001/api/feedback/
-    const { userEmail, message, user, type } = req.body;
+    const { userEmail, message, user, type, status } = req.body;
 
     let feedback = {};
     feedback.userEmail = userEmail;
     feedback.user = user;
     feedback.message = message;
     feedback.type = type;
+    feedback.status = status;
 
     let feedbackModel = new Feedback(feedback);
     await feedbackModel.save()
