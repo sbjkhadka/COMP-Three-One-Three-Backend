@@ -400,6 +400,58 @@ router.get('/feedback', async (req, res) => {
     }).clone().catch(function (err) { console.log(err) })
 })
 
+router.put("/editFeedback", async (req, res) => {
+  // /e.g, http://localhost:3001/api/editRecipe/?id=6184781d533568e45cdbc19c
+  const { time, message } = req.body;
+  const query = { _id: req.query.id };
+
+  Feedback.findOneAndUpdate(
+    query,
+    {
+      $push: {
+        feedbackDetails: {
+          time: time,
+          message: message
+        },
+      },
+    },
+    { upsert: false },
+    function (err, doc) {
+      if (err) {
+        res.json({ status: 404 });
+      } else {
+        res.json({ status: 200 });
+      }
+    }
+  );
+});
+
+
+router.put("/changeTicketStatus", async (req, res) => {
+  // /e.g, http://localhost:3001/api/changeTicketStatus
+  const { Status, ticketId } = req.body;
+  console.log("status", Status);
+  console.log("tid", ticketId);
+  const query = { "_id": ticketId }
+
+  Feedback.findOneAndUpdate(
+    query,
+    {
+      $set: {
+        Status: Status,
+      },
+    },
+    { upsert: false },
+    function (err, doc) {
+      if (err) {
+        res.json({ status: 404 });
+      } else {
+        res.json({ status: 200 });
+      }
+    }
+  );
+});
+
 // API post route to compare answer
 router.post('/securityQuestion', async (req, res) => {
     const userEmail = req.body.email;
