@@ -14,12 +14,22 @@ const feedback = new mongoose.Schema({
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: "user",
   },
-  status: {
+  Status: {
     type: String,
     enum: ["Open", "Closed"],
   },
+  feedbackDetails: [
+    {
+      time: {
+        type: String,
+      },
+      message: {
+        type: String,
+      },
+    },
+  ],
 });
 
 module.exports = User = mongoose.model('feedback', feedback);
