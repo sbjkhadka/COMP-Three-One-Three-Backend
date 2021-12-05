@@ -8,10 +8,6 @@ const jwt = require('jsonwebtoken');
 
 router.use(express.json());
 
-router.get('/', (req, res) => {
-    res.send('Testing... testing');
-});
-
 // get recipe by id
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
