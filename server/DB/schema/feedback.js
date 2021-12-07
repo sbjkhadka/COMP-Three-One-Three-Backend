@@ -2,20 +2,34 @@
 const mongoose = require('mongoose');
 
 const feedback = new mongoose.Schema({
-    type: {
+  type: {
+    type: String,
+    enum: ["Support", "Feedback"],
+  },
+  message: {
+    type: String,
+  },
+  userEmail: {
+    type: String,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
+  Status: {
+    type: String,
+    enum: ["Open", "Closed"],
+  },
+  feedbackDetails: [
+    {
+      time: {
         type: String,
-    },
-    message: {
+      },
+      message: {
         type: String,
+      },
     },
-    userEmail: {
-        type: String,
-        enum: ['Support', 'Feedback']
-    },
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
-    }
+  ],
 });
 
 module.exports = User = mongoose.model('feedback', feedback);

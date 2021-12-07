@@ -412,13 +412,14 @@ router.delete('/recipe', (req, res) => {
 // post feedback or support
 router.post('/feedback', async (req, res) => {
     // /e.g, http://localhost:3001/api/feedback/
-    const { userEmail, message, user, type } = req.body;
+    const { userEmail, message, user, type, status } = req.body;
 
     let feedback = {};
     feedback.userEmail = userEmail;
     feedback.user = user;
     feedback.message = message;
     feedback.type = type;
+    feedback.status = status;
 
     let feedbackModel = new Feedback(feedback);
     await feedbackModel.save()
@@ -430,6 +431,19 @@ router.post('/feedback', async (req, res) => {
             delete tempObj.keyValue;
             res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
+})
+
+// get all feedbacks
+router.get('/allFeedbacks', async (req, res) => {
+    // e.g., http://localhost:3001/api/feedback/
+    await Feedback.find({}, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.json({ status: 404 })
+        } else {
+            res.json({ status: 200, feedbacks: result });
+        }
+    }).clone().catch(function (err) { console.log(err) })
 })
 
 // get feedbacks by type
@@ -446,6 +460,58 @@ router.get('/feedback', async (req, res) => {
         }
     }).clone().catch(function (err) { console.log(err) })
 })
+
+router.put("/editFeedback", async (req, res) => {
+  // /e.g, http://localhost:3001/api/editRecipe/?id=6184781d533568e45cdbc19c
+  const { time, message } = req.body;
+  const query = { _id: req.query.id };
+
+  Feedback.findOneAndUpdate(
+    query,
+    {
+      $push: {
+        feedbackDetails: {
+          time: time,
+          message: message
+        },
+      },
+    },
+    { upsert: false },
+    function (err, doc) {
+      if (err) {
+        res.json({ status: 404 });
+      } else {
+        res.json({ status: 200 });
+      }
+    }
+  );
+});
+
+
+router.put("/changeTicketStatus", async (req, res) => {
+  // /e.g, http://localhost:3001/api/changeTicketStatus
+  const { Status, ticketId } = req.body;
+  console.log("status", Status);
+  console.log("tid", ticketId);
+  const query = { "_id": ticketId }
+
+  Feedback.findOneAndUpdate(
+    query,
+    {
+      $set: {
+        Status: Status,
+      },
+    },
+    { upsert: false },
+    function (err, doc) {
+      if (err) {
+        res.json({ status: 404 });
+      } else {
+        res.json({ status: 200 });
+      }
+    }
+  );
+});
 
 // API post route to compare answer
 router.post('/securityQuestion', async (req, res) => {
