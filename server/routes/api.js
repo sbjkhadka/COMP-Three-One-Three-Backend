@@ -7,12 +7,11 @@ const Feedback = require('../DB/schema/feedback');
 const jwt = require('jsonwebtoken');
 
 router.use(express.json());
-
 router.get('/', (req, res) => {
     res.send('Testing... testing');
 });
 
-// get recipe by id
+// get recipe by id Return recipe and ingredients
 router.get('/recipes', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipes/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
@@ -111,7 +110,7 @@ router.get('/ingredientsByUserEmail', async (req, res) => {
     await Ingredient.find({ userEmail: userEmail }).then((ingredientRes) => {
         if (ingredientRes) {
             ingredients.push(ingredientRes);
-            res.json({ status: 200, recipes: ingredients });
+            res.json({ status: 200, ingredients: ingredients });
         }
         else {
             res.json({ status: 404, details: 'Ingredient not found' });
@@ -144,13 +143,75 @@ router.get('/userRecipes', async (req, res) => {
  *        description: A successful response
  */
 router.get('/allRecipes', async (req, res) => {
+    // /e.g, http://localhost:3001/api/allRecipes
     const recipes = await Recipe.find();
-    if (recipes) {
-        res.json({ status: 200, recipes: recipes });
+    let recipeIdList = []
+    for (let i = 0; i < recipes.length; i++) {
+        recipeIdList.push(recipes[i]._id)
+    }
+
+    let recipe = []
+    for (let k = 0; k < recipeIdList.length; k++) {
+        let recipeDTO = {
+            recipeId: "",
+            recipeName: "",
+            description: "",
+            price: "",
+            recipePhoto: "",
+            userEmail: "",
+            recipeItem_: []
+        }
+
+        await Recipe.findOne({_id: recipeIdList[k]}).then(async (recipeRes) => {
+            if (recipeRes) {
+                recipeDTO.recipeId = recipeRes._id
+                recipeDTO.recipeName = recipeRes.recipeName
+                recipeDTO.description = recipeRes.description
+                recipeDTO.price = recipeRes.price
+                recipeDTO.recipePhoto = recipeRes.recipePhoto
+                recipeDTO.userEmail = recipeRes.userEmail
+                let recipeItem = recipeRes.recipeItem;
+                let ingredients = [];
+
+                for (let j = 0; j < recipeItem.length; j++) {
+                    let recipeItemDTO = {
+                        ingredientName: "",
+                        itemQuantity_: "",
+                        ingredientId: "",
+                        unitType: "",
+                        calorie: "",
+                        itemId: ""
+                    }
+                    let obj = recipeItem[j];
+                    await Ingredient.findOne({_id: obj.ingredients}).then((ing) => {
+                        if (ing) {
+                            recipeItemDTO.ingredientId = ing._id
+                            recipeItemDTO.ingredientName = ing.ingredientName
+                            recipeItemDTO.calorie = ing.calorie
+                            recipeItemDTO.unitType = ing.unitType
+                            recipeDTO.recipeItem_ = recipeItemDTO
+                            recipeItemDTO.ingredientId = ing._id
+                            recipeItemDTO.itemQuantity_ = recipeItem[j].itemQuantity
+                            recipeItemDTO.itemId = recipeItem[j]._id
+                            ingredients.push(recipeItemDTO);
+                        }
+                    })
+                    recipeDTO.recipeItem_ = ingredients
+                }
+
+            } else {
+                res.json({status: 404, details: 'Recipe not found'});
+            }
+        })
+        recipe.push(recipeDTO);
+    }
+    if (recipe) {
+        res.json({status: 200, recipe: recipe});
     } else {
-        res.json({ status: 404, details: 'recipes not found' })
+        res.json({status: 404, details: 'recipes not found'})
     }
 })
+
 /**
  * @swagger
  * /api/globalRecipes:
