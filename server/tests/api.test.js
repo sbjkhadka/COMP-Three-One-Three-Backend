@@ -1,6 +1,7 @@
 const User = require('../DB/schema/user');
 const usercontroller = require('../../server/controllers/user.controller');
 const ingredientcontroller = require('../../server/controllers/ingredient.controller');
+const recipecontroller = require('../../server/controllers/recipe.controller');
 const db = require('./db')
 const mongoose = require('mongoose');
 
@@ -10,7 +11,7 @@ afterEach(async () => await db.clearDatabase());
 
 afterAll(async () => await db.closeDatabase());
 
-describe('First test suite for Backend ', () => {
+describe('Test suite for Backend ', () => {
 
     it('user can be created correctly', async () => {
         //**Test if new user can be created/registered */
@@ -28,4 +29,9 @@ describe('First test suite for Backend ', () => {
             expect(err.message).toEqual("No ingredients found");
         }
     });
+
+    it('Recipe can be deleted successfully.', async () => {
+        expect(async () => await recipecontroller.deleteRecipe('6184781d533568e45cdbc19c')).not
+            .toThrow();
+    })
 });
