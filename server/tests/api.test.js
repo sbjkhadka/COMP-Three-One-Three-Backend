@@ -1,8 +1,9 @@
-const db = require('./db')
-const mongoose = require('mongoose');
 const User = require('../DB/schema/user');
 const usercontroller = require('../../server/controllers/user.controller');
 const ingredientcontroller = require('../../server/controllers/ingredient.controller');
+const db = require('./db')
+const mongoose = require('mongoose');
+
 beforeAll(async () => await db.connect());
 
 afterEach(async () => await db.clearDatabase());
@@ -18,12 +19,11 @@ describe('First test suite for Backend ', () => {
             .toThrow();
     });
 
-    it("Should return error if no ingredient found", async () => {
+    it("Should return meaningful error if no ingredient found", async () => {
         try {
-            await ingredientcontroller.getIngredients("idthatdoesnotexist1234");
+            await ingredientcontroller.getIngredient("idthatdoesnotexist1234");
         } catch (err) {
             expect(err).toBeTruthy();
-            console.log('meessage,', err);
             expect(err.status).toBe(404);
             expect(err.message).toEqual("No ingredients found");
         }

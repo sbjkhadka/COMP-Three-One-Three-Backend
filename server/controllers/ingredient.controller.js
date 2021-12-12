@@ -15,10 +15,11 @@ module.exports.createIngredient = async (req, res) => {
     }
 };
 
-module.exports.getIngredients = async (req, res) => {
+module.exports.getIngredient = async (ingredientId) => {
     try {
-        const ingredients = await Ingredeint.findAll();
-        return { ingredients: ingredients }
+        const ingredients = await Ingredeint.find({ _id: ingredientId }).then((ing) => {
+            return { ingredients: ing }
+        })
     } catch (error) {
         return { status: 404, message: 'No ingredients found' }
     }
