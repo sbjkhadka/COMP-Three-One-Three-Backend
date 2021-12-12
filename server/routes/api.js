@@ -479,16 +479,15 @@ router.post("/fetchSecurityQuestion", async (req, res) => {
 
 // Route for registering a user
 router.post('/register', async (req, res) => {
-    const { first_name, last_name, email, role, password, securityQuestion, securityAnswer } = req.body;
+    const { firstName, lastName, email, role, password, securityQuestion, securityAnswer } = req.body;
     let user = {};
-    user.first_name = first_name;
-    user.last_name = last_name;
+    user.first_name = firstName;
+    user.last_name = lastName;
     user.email = email.trim();
     user.role = role;
     user.password = password;
     user.securityQuestion = securityQuestion;
     user.securityAnswer = securityAnswer.trim();
-
     let userModel = new User(user);
     await userModel.save()
         .then((user) => {
