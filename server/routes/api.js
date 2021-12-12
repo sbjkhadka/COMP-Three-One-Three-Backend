@@ -52,6 +52,7 @@ router.get('/users', async (req, res) => {
     }
 })
 
+// delete user by user email
 router.delete('/users', async (req, res) => {
     // e.g., http://localhost:3001/api/users/?userEmail=test@deelete.com
     const userEmail = req.query.userEmail;
@@ -83,6 +84,7 @@ router.get('/ingredients', async (req, res) => {
         res.json({ status: 404, details: 'Ingredients not found' })
     }
 })
+
 // Get all ingredient by user ID
 router.get('/ingredientsByUserId', async (req, res) => {
     // /e.g, http://localhost:3001/api/ingredientsByUserId/?userId=61847622533568e45cdbc197
@@ -230,7 +232,7 @@ router.post('/ingredient', async (req, res) => {
         });
 });
 
-// get recipe by id
+// Get recipe by id
 router.get('/recipe', async (req, res) => {
     // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
@@ -242,11 +244,10 @@ router.get('/recipe', async (req, res) => {
         res.json({ status: 500, details: 'No recipe found' })
     }
 })
-//Generate grocery list
+// Generate grocery list
 router.get('/groceryList', async (req, res) => {
     // /e.g, http://localhost:3001/api/groceryList/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
-    // const recipe = await Recipe.findOne({ _id: recipeId });
     let recipeName
     let recipeItems = []
     await Recipe.find({ _id: recipeId }).then((recipeRes) => {
@@ -264,7 +265,6 @@ router.get('/groceryList', async (req, res) => {
     })
 
 })
-
 
 // Create new recipe & ingredients
 router.post('/recipe', async (req, res) => {
@@ -289,7 +289,8 @@ router.post('/recipe', async (req, res) => {
             res.json({ status: 'FAIL', details: tempObj }); // handle this from the backend
         });
 });
-// route for resetting password
+
+// Resetting password
 router.post('/resetPassword', async (req, res) => {
     const userEmail = req.body.email;
     const userPassword = req.body.password;
@@ -306,6 +307,7 @@ router.post('/resetPassword', async (req, res) => {
     });
 })
 
+// Edit recipe by recipe Id
 router.put('/editRecipe', async (req, res) => {
     // /e.g, http://localhost:3001/api/editRecipe/?recipeId=6184781d533568e45cdbc19c
     const recipeId = req.query.recipeId;
@@ -330,7 +332,7 @@ router.put('/editRecipe', async (req, res) => {
     });
 })
 
-// delete recipe
+// delete recipe by recipe Id
 router.delete('/recipe', (req, res) => {
     // /e.g, http://localhost:3001/api/recipe/?recipeId=6184750a533568e45cdbc195
     const recipeId = req.query.recipeId;
@@ -368,7 +370,7 @@ router.post('/feedback', async (req, res) => {
         });
 })
 
-// get all feedbacks
+// get all feedback/support
 router.get('/allFeedbacks', async (req, res) => {
     // e.g., http://localhost:3001/api/feedback/
     await Feedback.find({}, (err, result) => {
@@ -396,6 +398,7 @@ router.get('/feedback', async (req, res) => {
     }).clone().catch(function (err) { console.log(err) })
 })
 
+// edit feedback by feedback id
 router.put("/editFeedback", async (req, res) => {
   // /e.g, http://localhost:3001/api/editRecipe/?id=6184781d533568e45cdbc19c
   const { time, message } = req.body;
@@ -422,7 +425,7 @@ router.put("/editFeedback", async (req, res) => {
   );
 });
 
-
+// update feedback/support ticket status by ticket Id
 router.put("/changeTicketStatus", async (req, res) => {
   // /e.g, http://localhost:3001/api/changeTicketStatus
   const { Status, ticketId } = req.body;
@@ -544,6 +547,7 @@ router.get('/recipees', authenticateToken, (req, res) => {
     res.json(recipees.filter((recipee) => recipee.email === req.user.email));
 });
 
+// authentication token post route
 router.post('/token', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
@@ -555,6 +559,7 @@ router.post('/token', (req, res) => {
     });
 });
 
+// Logout route clears token
 router.delete('/logout', (req, res) => {
     refreshTokens = refreshTokens.filter(token => token !== req.body.token);
     res.sendStatus(204);
@@ -578,6 +583,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// generate access token
 function generateAccessToken(user) {
     return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
 }
